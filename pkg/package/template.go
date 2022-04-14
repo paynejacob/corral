@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"reflect"
 	"strings"
 
 	"github.com/sirupsen/logrus"
@@ -62,12 +61,6 @@ func MergePackages(name string, pkgs []Package) (TemplateManifest, error) {
 			t.Overlay[k] = v
 		}
 		for k, v := range yml.VariableSchemas {
-			if schema, ok := t.VariableSchemas[k]; ok {
-				if !reflect.DeepEqual(schema, v) {
-					logrus.Fatalf("Variable \"%s\" has conflicting schemas:\n%s:\t%v\n%s:\t%v", k, srcs[k], schema, pkg.Name, v)
-				}
-				continue
-			}
 			t.VariableSchemas[k] = v
 			srcs[k] = pkg.Name
 		}
@@ -108,10 +101,6 @@ func copyFiles(root, dir string, pkg Package) error {
 			return err
 		}
 
-		if path == dir {
-			return nil
-		}
-
 		orig := path[len(dir):]
 		destPath := root + orig
 
@@ -126,10 +115,6 @@ func copyFiles(root, dir string, pkg Package) error {
 				return nil
 			}
 			logrus.Debugf("%s: %s -> %s", pkg.Name, orig, destPath)
-
-			if _, err = os.Stat(destPath); err == nil {
-				logrus.Fatalf("file already exists: %s", destPath)
-			}
 
 			f, err := os.Create(destPath)
 			if err != nil {
